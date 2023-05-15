@@ -1,4 +1,4 @@
-#Spurious Association in time series
+# Spurious Association in time series
 
 The project aims to investigate the spurious association in time series data.
 
