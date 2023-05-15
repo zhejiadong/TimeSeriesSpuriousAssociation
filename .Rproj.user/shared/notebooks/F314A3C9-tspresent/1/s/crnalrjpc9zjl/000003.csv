@@ -1,0 +1,6 @@
+"0","hist(dis.core, main = ""Distance correlations for MA(2)"",
+     xlab = ""Distance correlation"", col = ""lightblue"", prob=T)
+"
+"2","Error in hist(dis.core, main = ""Distance correlations for MA(2)"", xlab = ""Distance correlation"",  : 
+  object 'dis.core' not found
+"

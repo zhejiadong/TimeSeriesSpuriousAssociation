@@ -1,0 +1,564 @@
+---
+title: "tspresent"
+author: "Zhejia Dong"
+date: "2023-04-15"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,eval = TRUE,cache=TRUE,warning = FALSE,message = FALSE)
+knitr::opts_chunk$set(message = F)
+knitr::opts_chunk$set(warning = F)
+knitr::opts_chunk$set(fig.height = 4)
+knitr::opts_chunk$set(fig.width = 6)
+knitr::opts_chunk$set(fig.align="center")
+```
+
+```{r libarary, include = FALSE, echo =TRUE}
+library(tidyr) #Allows for us to manipulate the data structure
+library(data.table) #Allows for us to manipulate the data structure
+library(ggplot2) #this makes better looking plots in R
+library(dplyr)
+library(haven)
+library(astsa)
+library(TTR)
+library(forecast)
+library(broom.mixed)
+library(cowplot)
+library(knitr)
+library(TSA)
+library(energy)
+library(plotrix)
+library(kableExtra)
+theme_set(theme_minimal())
+```
+
+
+# MA(2) - second order moving average process
+
+$$
+Y_t = e_t + \theta_1 e_{t-1} + \theta_2 e_{t-2}
+$$
+where $e_{i}$ is white noise from $N(0, \sigma_e^2)$. Then we can get the variance and covariance as follows:
+
+$$
+\begin{align*}
+\gamma_0 & = Var(\gamma_t) = Var(e_t + \theta_1 e_{t-1} + \theta_2 e_{t-2}) = (1+\theta^2_1 + \theta^2_2) \sigma^2_e\\
+\gamma_1 & = Cov(Y_t, Y_{t-1}) \\
+& = Cov(e_t + \theta_1 e_{t-1} + \theta_2 e_{t-2}, e_{t-1} + \theta_1 e_{t-2} + \theta_2 e_{t-3} )\\
+& = (\theta_1 + \theta_1\theta_2)\sigma^2_e\\
+\gamma_2& = Cov(Y_t, Y_{t-2})\\
+& =Cov(e_t + \theta_1 e_{t-1} + \theta_2 e_{t-2}, e_{t-2} + \theta_1 e_{t-3} + \theta_2 e_{t-4} )\\
+& = \theta_2\sigma^2_e
+\end{align*}
+$$
+
+For a MA(2) time series {$Y_t$},$t = 1,2,\cdots, n$, the variance matrix should be
+
+\[
+\begin{bmatrix}
+    1 + \theta_1^2 + \theta_2^2 & \theta_1 + \theta_1\theta_2 &  \theta_2 & 0 & \cdots & 0 \\
+    \theta_1 + \theta_1\theta_2 & 1 + \theta_1^2 + \theta_2^2 &  \theta_1 + \theta_1\theta_2 & \theta_2 & \cdots & 0 \\
+     \theta_2 &  \theta_1 + \theta_1\theta_2 & 1 + \theta_1^2 + \theta_2^2 & \theta_1 + \theta_1\theta_2 & \cdots & 0 \\
+    0 &  \theta_2 &  \theta_1 + \theta_1\theta_2 & 1 + \theta_1^2 + \theta_2^2 & \cdots & 0 \\
+    \vdots & \vdots & \vdots & \vdots & \ddots & \vdots \\
+    0 & 0 & 0 & 0 & \cdots & 1 + \theta_1^2 + \theta_2^2
+\end{bmatrix} \sigma^2_e
+\]
+
+
+We then start to generate the MA(2). The parameter set to be $(\theta_1, \theta_2) = (0.7, 0.9)$. white noise {$e_t$} from standard normal distribution with zero mean and unit variance. The sample size is set to 1000.
+
+
+
+```{r}
+set.seed(98234) 
+theta1 <- 0.7
+theta2 <- 0.3
+popn <- 500
+eps <- rnorm(popn+2, mean = 0, sd = 1)
+ts <- c()
+
+# Creating example series
+for(i in 1:popn){
+  ts[i] <- eps[i+2] + theta1 * eps[i+1]  + theta2 * eps[i]
+}
+ts.plot(ts)
+### or use arima.sim 
+## arima.sim(  n = 500, list(ma = c(0.7,0.3)), sd = 1)
+
+
+```
+
+
+
+```{r, eval=FALSE}
+
+
+popn <- 1000
+n.sim <- 500
+ma.per <- c(0.9,0.9)
+ma.process <- function(ma.per, popn, mu = 0, sd = 1){
+  q <- length(ma.per)
+  eps.x <- rnorm((popn + q), mean = mu, sd = sd)
+  eps.y <- rnorm((popn + q), mean = mu, sd = sd)
+  x <- c()
+  y <- c()
+  for(i in (1+q):(popn+q)){
+    x[i] <- sum(eps.x[i:(i-q)] * c(1, ma.per[1:q]))
+    y[i] <- sum(eps.y[i:(i-q)] * c(1, ma.per[1:q]))
+  }
+  x <- x[(1+q) : (popn + q)]
+  y <- y[(1+q) : (popn + q)]
+  
+  return(list("x" = x, "y" = y, "ma.par" = ma.per,
+              "mu" = mu, "sd" = sd))
+}
+
+x.ts <- matrix(0, nrow = n.sim, ncol = popn) # per row is one replication
+y.ts <- matrix(0, nrow = n.sim, ncol = popn)
+
+
+for(i in 1: n.sim){
+  per.process <-ma.process(ma.per, popn)
+  x.ts[i,] <- per.process$x
+  y.ts[i,] <- per.process$y
+}
+
+
+
+```
+
+```{r result, eval=FALSE}
+cor.coef <- c()
+dis.core <- c()
+dis.p <- c()
+lm.p <- c()
+lm.beta <- c()
+z.beta <- c()
+
+
+for(i in 1:n.sim){
+  cor.coef[i] <- cor(x.ts[i,], y.ts[i,])
+  dis.core[i] <- dcor(x.ts[i,], y.ts[i,])
+  dd <- dcorT.test(x.ts[i,], y.ts[i,])
+  dis.p[i] <-dd$p.value
+  lt <- lm(y.ts[i,] ~ x.ts[i,])
+  ls <- summary(lt)
+  lm.beta[i] <- ls$coefficients[2,"Estimate"]
+  lm.p[i] <- ls$coefficients[2,4] ## p value for linear regression test, p value.
+  z.beta[i] <- lm.beta[i]/ (ls$coefficients[2,"Std. Error"] * sd(x.ts[i,]))
+}
+
+
+
+```
+
+## First simulation MA(2) (0.7,0.3)
+
+```{r, echo=FALSE}
+rm(list = ls())
+load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/ts present/data/first.sim.RData")
+#load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/ts present/data/second.sim.RData")
+```
+
+- cross correlation function plot
+```{r}
+
+ccf(y.ts[1,], x.ts[1,])
+
+```
+
+- Correlation coefficients (ccf at lag 0)
+- Distance correlation
+- Standard beta correlation
+- Rejection rates of linear and distance correlaion test
+
+```{r}
+load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/ts present/data/first.sim.RData")
+hist(cor.coef, main = "Correlation coefficients for MA(2)",
+     xlab = "Correlation coefficient", col = "lightblue",prob=T)
+
+hist(dis.core, main = "Distance correlations for MA(2)",
+     xlab = "Distance correlation", col = "lightblue", prob=T)
+
+hist(z.beta, main = expression(bold(paste("Standardized ", beta, " coefficients for MA(2)"))),
+     xlab = expression(paste("Standardized ", beta, " coefficients")) ,
+     col = "lightblue",prob=T)
+
+
+data.frame( "linear test" = mean(lm.p < 0.05),
+            "dis test" = mean(dis.p < 0.05)) %>% 
+  kbl( booktabs=T, escape=T, align = "c",digits = 3,
+                caption = "Rejection rates for linear and distance correlation test") %>%
+  kable_styling(full_width =F, latex_options = c("HOLD_position")) %>% 
+  kable_material(c("striped")) 
+```
+
+## Second simulation MA(2) (0.9,0.9) highly correlated
+
+```{r, echo=FALSE}
+rm(list = ls())
+#load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/ts present/data/first.sim.RData")
+load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/ts present/data/second.sim.RData")
+```
+
+- cross correlation function plot
+
+```{r}
+ccf(y.ts[1,], x.ts[1,])
+
+```
+
+- Correlation coefficients (ccf at lag 0)
+- Distance correlation
+- Standard beta correlation
+- Rejection rates of linear and distance correlation test
+
+
+```{r, echo=FALSE}
+load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/ts present/data/second.sim.RData")
+hist(cor.coef, main = "Correlation coefficients for MA(2)",
+     xlab = "Correlation coefficient", col = "lightblue",prob=T)
+
+hist(dis.core, main = "Distance correlations for MA(2)",
+     xlab = "Distance correlation", col = "lightblue", prob=T)
+
+hist(z.beta, main = expression(bold(paste("Standardized ", beta, " coefficients for MA(2)"))),
+     xlab = expression(paste("Standardized ", beta, " coefficients")) ,
+     col = "lightblue",prob=T)
+
+
+data.frame( "linear test" = mean(lm.p < 0.05),
+            "dis test" = mean(dis.p < 0.05)) %>% 
+  kbl( booktabs=T, escape=T, align = "c",digits = 3,
+                caption = "Rejection rates for linear and distance correlation test") %>%
+  kable_styling(full_width =F, latex_options = c("HOLD_position")) %>% 
+  kable_material(c("striped")) 
+```
+
+
+
+## AR(2)
+
+Then we consider auto regressive process.
+
+$$Y_t = \phi_1 Y_{t-1} + \phi_2 Y_{t-2} + e_t $$
+AR characteristic polynomial $\phi(x) = 1 -\phi_1x -\phi_2 x^2$
+
+A simple sample：
+
+```{r}
+set.seed(123456)
+popn <- 1000
+ar.par <- c(0.7, 0.3)
+p <- length(ar.par)
+eps <- rnorm( popn + p, 0, 1)
+
+ts <- rnorm(popn+p, 0, 1)
+
+for(i in (p+1) : (popn+p)){
+  ts[i] <-   sum(ar.par * ts[(i-1):(i-p)]) + eps[i] 
+}
+
+ts.plot(ts[(p+1):(popn + p)])
+```
+
+## Third simulation AR(2) (0.7,0.3)
+
+```{r, echo=FALSE,eval=FALSE}
+popn <- 1000
+n.sim <- 500
+ar.par <- c(0.7, 0.3)
+p <- length(ar.par)
+
+
+ar.process <- function(ar.par, popn, mu = 0, sd = 1){
+  p <- length(ar.par)
+  eps.x <- rnorm((popn + p), mean = mu, sd = sd)
+  eps.y <- rnorm((popn + p), mean = mu, sd = sd)
+  x <- rnorm(popn+p, 0, 1)
+  y <- rnorm(popn+p, 0, 1)
+  for(i in (1+p):(popn+p)){
+    x[i] <-  sum(ar.par * x[(i-1):(i-p)]) + eps.x[i]  
+    y[i] <-  sum(ar.par * x[(i-1):(i-p)])  + eps.y[i]
+  }
+  x <- x[(1+p) : (popn + p)]
+  y <- y[(1+p) : (popn + p)]
+  
+  return(list("x" = x, "y" = y, "ar.par" = ar.par,
+              "mu" = mu, "sd" = sd))
+}
+
+x.ts <- matrix(0, nrow = n.sim, ncol = popn) # per row is one replication
+y.ts <- matrix(0, nrow = n.sim, ncol = popn)
+
+for(i in 1: n.sim){
+  per.process <- ar.process(ar.par, popn)
+  x.ts[i,] <- per.process$x
+  y.ts[i,] <- per.process$y
+}
+
+
+cor.coef <- c()
+dis.core <- c()
+dis.p <- c()
+lm.p <- c()
+lm.beta <- c()
+z.beta <- c()
+
+
+for(i in 1:n.sim){
+  cor.coef[i] <- cor(x.ts[i,], y.ts[i,])
+  dis.core[i] <- dcor(x.ts[i,], y.ts[i,])
+  dd <- dcorT.test(x.ts[i,], y.ts[i,])
+  dis.p[i] <-dd$p.value
+  lt <- lm(y.ts[i,] ~ x.ts[i,])
+  ls <- summary(lt)
+  lm.beta[i] <- ls$coefficients[2,"Estimate"]
+  lm.p[i] <- ls$coefficients[2,4] ## p value for linear regression test, p value.
+  z.beta[i] <- lm.beta[i]/ (ls$coefficients[2,"Std. Error"] * sd(x.ts[i,]))
+}
+
+
+
+```
+
+```{r, echo=FALSE}
+rm(list = ls())
+#load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/ts present/data/first.sim.RData")
+#load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/ts present/data/second.sim.RData")
+load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/ts present/data/third.sim.RData")
+```
+
+- cross correlation function plot
+
+```{r echo=FALSE}
+ccf(y.ts[1,], x.ts[1,])
+
+```
+
+- Correlation coefficients (ccf at lag 0)
+- Distance correlation
+- Standard beta correlation
+- Rejection rates of linear and distance correlation test
+
+
+```{r echo=FALSE}
+load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/ts present/data/third.sim.RData")
+hist(cor.coef, main = "Correlation coefficients for AR(2)",
+     xlab = "Correlation coefficient", col = "lightblue",prob=T)
+
+hist(dis.core, main = "Distance correlations for AR(2)",
+     xlab = "Distance correlation", col = "lightblue", prob=T)
+
+hist(z.beta, main = expression(bold(paste("Standardized ", beta, " coefficients for AR(2)"))),
+     xlab = expression(paste("Standardized ", beta, " coefficients")) ,
+     col = "lightblue",prob=T)
+
+
+data.frame( "linear test" = mean(lm.p < 0.05),
+            "dis test" = mean(dis.p < 0.05)) %>% 
+  kbl( booktabs=T, escape=T, align = "c",digits = 3,
+                caption = "Rejection rates for linear and distance correlation test") %>%
+  kable_styling(full_width =F, latex_options = c("HOLD_position")) %>% 
+  kable_material(c("striped")) 
+```
+
+## Forth simulation AR(2) (0.9,-0.9)
+```{r, echo=FALSE}
+rm(list = ls())
+#load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/ts present/data/first.sim.RData")
+#load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/ts present/data/second.sim.RData")
+#load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/ts present/data/third.sim.RData")
+load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/ts present/data/forth.sim.RData")
+```
+
+- cross correlation function plot
+
+```{r echo=FALSE}
+ccf(y.ts[1,], x.ts[1,])
+
+```
+
+- Correlation coefficients (ccf at lag 0)
+- Distance correlation
+- Standard beta correlation
+- Rejection rates of linear and distance correlation test
+
+
+```{r echo=FALSE}
+load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/ts present/data/forth.sim.RData")
+hist(cor.coef, main = "Correlation coefficients for AR(2)",
+     xlab = "Correlation coefficient", col = "lightblue",prob=T)
+
+
+hist(dis.core, main = "Distance correlations for AR(2)",
+     xlab = "Distance correlation", col = "lightblue", prob=T)
+
+hist(z.beta, main = expression(bold(paste("Standardized ", beta, " coefficients for AR(2)"))),
+     xlab = expression(paste("Standardized ", beta, " coefficients")) ,
+     col = "lightblue",prob=T)
+
+
+data.frame( "linear test" = mean(lm.p < 0.05),
+            "dis test" = mean(dis.p < 0.05)) %>% 
+  kbl( booktabs=T, escape=T, align = "c",digits = 3,
+                caption = "Rejection rates for linear and distance correlation test") %>%
+  kable_styling(full_width =F, latex_options = c("HOLD_position")) %>% 
+  kable_material(c("striped")) 
+```
+
+
+## More simulation for AR(0.3,0.3)
+
+```{r, echo=FALSE}
+rm(list = ls())
+#load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/ts present/data/first.sim.RData")
+#load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/ts present/data/second.sim.RData")
+#load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/ts present/data/third.sim.RData")
+load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/ts present/data/fifth.sim.RData")
+
+ccf(y.ts[1,], x.ts[1,])
+
+hist(cor.coef, main = "Correlation coefficients for AR(2)",
+     xlab = "Correlation coefficient", col = "lightblue",prob=T)
+
+hist(dis.core, main = "Distance correlations for AR(2)",
+     xlab = "Distance correlation", col = "lightblue", prob=T)
+
+hist(z.beta, main = expression(bold(paste("Standardized ", beta, " coefficients for AR(2)"))),
+     xlab = expression(paste("Standardized ", beta, " coefficients")) ,
+     col = "lightblue",prob=T)
+
+
+data.frame( "linear test" = mean(lm.p < 0.05),
+            "dis test" = mean(dis.p < 0.05)) %>% 
+  kbl( booktabs=T, escape=T, align = "c",digits = 3,
+                caption = "Rejection rates for linear and distance correlation test") %>%
+  kable_styling(full_width =F, latex_options = c("HOLD_position")) %>% 
+  kable_material(c("striped")) 
+```
+
+
+
+
+## More simulation for AR(-0.3, -0.3)
+
+```{r, echo=FALSE}
+rm(list = ls())
+
+load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/ts present/data/six.sim(-0.3,-0.3).RData")
+
+ccf(y.ts[1,], x.ts[1,])
+
+hist(cor.coef, main = "Correlation coefficients for AR(2)",
+     xlab = "Correlation coefficient", col = "lightblue",prob=T)
+
+hist(dis.core, main = "Distance correlations for AR(2)",
+     xlab = "Distance correlation", col = "lightblue", prob=T)
+
+hist(z.beta, main = expression(bold(paste("Standardized ", beta, " coefficients for AR(2)"))),
+     xlab = expression(paste("Standardized ", beta, " coefficients")) ,
+     col = "lightblue",prob=T)
+
+
+data.frame( "linear test" = mean(lm.p < 0.05),
+            "dis test" = mean(dis.p < 0.05)) %>% 
+  kbl( booktabs=T, escape=T, align = "c",digits = 3,
+                caption = "Rejection rates for linear and distance correlation test") %>%
+  kable_styling(full_width =F, latex_options = c("HOLD_position")) %>% 
+  kable_material(c("striped")) 
+```
+
+
+
+## More Simulation for AR(0.5, 0.5)
+
+```{r, echo=FALSE}
+rm(list = ls())
+
+load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/ts present/data/seventh.sim(0.5,0.5).RData")
+
+ccf(y.ts[1,], x.ts[1,])
+
+hist(cor.coef, main = "Correlation coefficients for AR(2)",
+     xlab = "Correlation coefficient", col = "lightblue",prob=T)
+
+hist(dis.core, main = "Distance correlations for AR(2)",
+     xlab = "Distance correlation", col = "lightblue", prob=T)
+
+hist(z.beta, main = expression(bold(paste("Standardized ", beta, " coefficients for AR(2)"))),
+     xlab = expression(paste("Standardized ", beta, " coefficients")) ,
+     col = "lightblue",prob=T)
+
+
+data.frame( "linear test" = mean(lm.p < 0.05),
+            "dis test" = mean(dis.p < 0.05)) %>% 
+  kbl( booktabs=T, escape=T, align = "c",digits = 3,
+                caption = "Rejection rates for linear and distance correlation test") %>%
+  kable_styling(full_width =F, latex_options = c("HOLD_position")) %>% 
+  kable_material(c("striped")) 
+```
+
+
+
+```{r eval=FALSE}
+set.seed(923)
+popn <- 1000
+n.sim <- 500
+ar.par <- c(0.5, 0.5)
+p <- length(ar.par)
+
+
+ar.process <- function(ar.par, popn, mu = 0, sd = 1){
+  p <- length(ar.par)
+  eps.x <- rnorm((popn + p), mean = mu, sd = sd)
+  eps.y <- rnorm((popn + p), mean = mu, sd = sd)
+  x <- rnorm(popn+p, 0, 1)
+  y <- rnorm(popn+p, 0, 1)
+  for(i in (1+p):(popn+p)){
+    x[i] <-  sum(ar.par * x[(i-1):(i-p)]) + eps.x[i]  
+    y[i] <-  sum(ar.par * x[(i-1):(i-p)])  + eps.y[i]
+  }
+  x <- x[(1+p) : (popn + p)]
+  y <- y[(1+p) : (popn + p)]
+  
+  return(list("x" = x, "y" = y, "ar.par" = ar.par,
+              "mu" = mu, "sd" = sd))
+}
+
+x.ts <- matrix(0, nrow = n.sim, ncol = popn) # per row is one replication
+y.ts <- matrix(0, nrow = n.sim, ncol = popn)
+
+for(i in 1: n.sim){
+  per.process <- ar.process(ar.par, popn)
+  x.ts[i,] <- per.process$x
+  y.ts[i,] <- per.process$y
+}
+
+
+cor.coef <- c()
+dis.core <- c()
+dis.p <- c()
+lm.p <- c()
+lm.beta <- c()
+z.beta <- c()
+
+
+for(i in 1:n.sim){
+  cor.coef[i] <- cor(x.ts[i,], y.ts[i,])
+  dis.core[i] <- dcor(x.ts[i,], y.ts[i,])
+  dd <- dcorT.test(x.ts[i,], y.ts[i,])
+  dis.p[i] <-dd$p.value
+  lt <- lm(y.ts[i,] ~ x.ts[i,])
+  ls <- summary(lt)
+  lm.beta[i] <- ls$coefficients[2,"Estimate"]
+  lm.p[i] <- ls$coefficients[2,4] ## p value for linear regression test, p value.
+  z.beta[i] <- lm.beta[i]/ (ls$coefficients[2,"Std. Error"] * sd(x.ts[i,]))
+}
+
+
+```
+
+

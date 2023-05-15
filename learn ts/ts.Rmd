@@ -1,0 +1,156 @@
+---
+title: "Time series"
+author: "Zhejia Dong"
+date: "2023-03-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,eval = TRUE,cache=TRUE,warning = FALSE,message = FALSE)
+```
+
+```{r libarary, include = FALSE, echo =TRUE}
+library(tidyr) #Allows for us to manipulate the data structure
+library(data.table) #Allows for us to manipulate the data structure
+library(ggplot2) #this makes better looking plots in R
+library(dplyr)
+library(haven)
+library(astsa)
+library(TTR)
+library(forecast)
+library(broom.mixed)
+library(cowplot)
+library(knitr)
+library(TSA)
+library(kableExtra)
+theme_set(theme_minimal())
+```
+
+## Covariate time series
+
+Let $Y = \{Y_t\}$ be time series of response variable and $X = \{X_t\}$ be the covariate time series. The $\gamma_{t,s} (X,Y) = Cov(X_t, Y _s)$ is the cross-variance function for each pairs of t and s.
+
+
+For jointly stationary process, the cross-correlation function at lag k is $\rho_{k} (X,Y) =Corr(X_t, Y_{t-k}) = Corr(X_{t+k}, Y_t)$ If $X = Y$, then the cross-correlation becomes the autocorrelation of $Y$ at lag k. The coefficient $\rho_0(Y,X)$ measures the contemporaneous *linear association* between $X$ and $Y$. The coefficient $\rho_k (X,Y)$ measures the linear association between $X_t$ and $Y_{t-k}$.
+
+
+
+
+
+
+## Sample cross-correlation function
+
+$$Y_t = \beta_0 + \beta_1 X_{t-d} + e_t$$
+
+$$r_k(X,Y) = \dfrac{\sum(X_t - \bar X)(Y_{t-k} - \bar Y)}{\sqrt{\sum(X_t - \bar X)^2}\sqrt{\sum(Y_t - \bar Y)^2}}$$
+
+## Exhibit 11.14
+
+Monthly milk production and the logarithms of monthly electricity production in the United States from January 1994 to December 2005. 
+
+- observed both increasing trends
+
+```{r 11.14}
+data(milk)
+data(electricity)
+milk.electricity=ts.intersect(milk,log(electricity))
+# ts.intersect merge several time series into a panel of time
+plot(milk.electricity,yax.flip=T) 
+```
+
+- Strong cross-correlation
+
+```{r 11.15}
+ccf(as.numeric(milk.electricity[,1]),as.numeric(milk.electricity[,2]),
+    main='milk & electricity',ylab='CCF')
+ccf((milk.electricity[,1]),(milk.electricity[,2]), main='milk & electricity',ylab='CCF')
+```
+
+
+## Prewhitening
+
+- Linear operation
+
+$$
+\tilde X = (1- \pi_1 B - \pi_2 B^2 - \cdots)X_t = \pi(B) X_t
+$$
+
+- Regression model
+
+$$
+Y_t = \sum^{+\infty}_{ j = -\infty}\beta_j X_{t-j} + Z_t
+$$
+$$
+\tilde Y_t = \sum^{+\infty}_{ k = -\infty}\beta_k \tilde X_{t-k} + \tilde Z_t
+$$
+
+$\tilde X$ is then a white noise and independent of $\tilde Z$.
+
+- Prewhiten to deal with the spurious correlation.
+
+  - Determine a time series model for the x-variable and store the residuals from this model.
+  - Filter the y-variable series using the x-variable model (using the estimated coefficients from step 1). In this step we find differences between observed y-values and “estimated” y-values based on the x-variable model.
+  - Examine the CCF between the residuals from Step 1 and the filtered y-values from Step 2. This CCF can be used to identify the possible terms for a lagged regression.
+
+```{r 11.16}
+me.dif=ts.intersect(diff(diff(milk,12)),diff(diff(log(electricity),12)))
+prewhiten(as.numeric(me.dif[,1]),as.numeric(me.dif[,2]), main='milk & electricity',ylab='CCF' )
+```
+
+
+
+
+
+
+
+```{r 1, echo= FALSE, eval=FALSE}
+#d= 2, $\beta_0 = 0, \beta_1 = 1$
+set.seed(12345)
+X=rnorm(105)
+Y=zlag(X,2)+.5*rnorm(105)
+X=ts(X[-(1:5)],start=1,freq=1)
+Y=ts(Y[-(1:5)],start=1,freq=1)
+ccf(X,Y,ylab='CCF', main = "ccf")
+```
+
+
+```{r 3, echo=FALSE, eval=FALSE}
+# Exhibit 11.13
+set.seed(23457)
+correlation.v=NULL
+B=1000
+n=500
+for (i in 1:B) {x=cumsum(arima.sim(model=list(ma=.8),n=n))
+y=cumsum(arima.sim(model=list(ma=.8),n=n))
+correlation.v=c(correlation.v,ccf(x,y,lag.max=1,plot=F)$acf[2])
+}
+hist(correlation.v,prob=T,xlab=expression(r[0](X,Y)))
+```
+
+
+### Prewhiten simulation
+
+```{r prewhiten sim}
+x = arima.sim(list(order = c(1,1,0), ar = 0.7), n = 200)   
+
+
+#Creates a matrix z with columns, xt, xt-3, and xt-4
+z = ts.intersect(x, stats::lag(x,-3), stats::lag(x,-4)) 
+
+#Creates y (our target) from lags 3 and 4 of randomly generated x
+y = 15+0.8*z[,2]+1.5*z[,3]  
+
+#CCF between x and y doesn't show any relationship
+ccf(z[,1],y,na.action = na.omit,main='Cross-correlogram without pre-whitening', ylab = "CCF") 
+
+aa=auto.arima(x)
+
+coef(aa)
+
+pwx=aa$residuals
+
+#pre-whitening y
+newpwy = stats::filter(y, c(1,-(1+coef(aa)[1]),coef(aa)[1]), sides =1)
+ccf(pwx,newpwy,na.action=na.omit,main='Cros-correlogram after pre-whitening',xlim=c(-20,20), ylab = "CCF")
+prewhiten(x,y, ylab = "CCF") # prewhiten function fron TSA (the package corrosponding to the textbook)
+```
