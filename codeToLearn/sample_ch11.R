@@ -63,7 +63,7 @@ ccf(as.numeric(milk.electricity[,1]),as.numeric(milk.electricity[,2]),
 # Exhibit 11.16
 me.dif=ts.intersect(diff(diff(milk,12)),diff(diff(log(electricity),12)))
 prewhiten(as.numeric(me.dif[,1]),as.numeric(me.dif[,2]),
-          ,ylab='CCF' )
+          ylab='CCF' )
 
 
 ## Bluebird Potato Chip example
