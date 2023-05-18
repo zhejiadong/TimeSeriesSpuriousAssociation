@@ -19,7 +19,7 @@ library(plotrix)
 ## sample
 set.seed(123456)
 popn <- 1000 # population number
-ar.par <- c(0.6, 0.3) # ar parameter
+ar.par <- c(0.9, -0.9) # ar parameter
 p <- length(ar.par) # parameter length
 eps <- rnorm( popn + p, 0, 1) # epsilon
 
@@ -36,7 +36,7 @@ ts.plot(ts[(p+1):(popn + p)]) # plot time series
 set.seed(123456)
 popn <- 1000
 n.sim <- 500
-ar.par <- c(-0.6,-0.3)
+ar.par <- c(0.7,0.35)
 p <- length(ar.par)
 
 
@@ -89,61 +89,120 @@ for(i in 1:n.sim){
 
 
 
+
 # AR(0.7, 0.3)
+pdf(file = "~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/Pictures/AR(0.7,0.3).corr.pdf",
+    width = 6,
+    height = 6)
 hist(cor.coef, main = "Correlation coefficients for AR(0.7, 0.3)",
-     xlab = "Correlation coefficient", col = "lightblue",prob=T)
+     xlab = "Correlation coefficient", col = "lightblue",prob=T,
+     cex.lab = 1.3, cex.axis = 1.5, cex.main = 1.3, cex.sub = 1.5)
+dev.off()
 
+pdf(file = "~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/Pictures/AR(0.7,0.3).dist.pdf",
+    width = 6,
+    height = 6)
 hist(dis.core, main = "Distance correlations for AR(0.7, 0.3)",
-     xlab = "Distance correlation", col = "lightblue", prob=T)
+     xlab = "Distance correlation", col = "lightblue", prob=T,
+     cex.lab = 1.3, cex.axis = 1.5, cex.main = 1.3, cex.sub = 1.5)
+dev.off()
 
+pdf(file = "~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/Pictures/AR(0.7,0.3).beta.pdf",
+    width = 6,
+    height = 6)
 hist(z.beta, main = expression(bold(paste("Standardized ", beta, " coefficients for AR(0.7, 0.3)"))),
      xlab = expression(paste("Standardized ", beta, " coefficients")) ,
-     col = "lightblue",prob=T)
+     col = "lightblue",prob=T,
+     cex.lab = 1.3, cex.axis = 1.5, cex.main = 1.3, cex.sub = 1.5)
+dev.off()
 
 
 data.frame( "linear test" = mean(lm.p < 0.05),
             "dis test" = mean(dis.p < 0.05)) 
 
 
-# AR(-0.7, - 0.3)
-ts.plot(x.ts[1,])
-
+pdf(file = "~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/Pictures/AR(-0.7,-0.3).corr.pdf",
+    width = 6,
+    height = 6)
 hist(cor.coef, main = "Correlation coefficients for AR(-0.7, -0.3)",
-     xlab = "Correlation coefficient", col = "lightblue",prob=T)
+     xlab = "Correlation coefficient", col = "lightblue",prob=T,
+     cex.lab = 1.3, cex.axis = 1.5, cex.main = 1.3, cex.sub = 1.5)
+dev.off()
 
+pdf(file = "~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/Pictures/AR(-0.7,-0.3).dist.pdf",
+    width = 6,
+    height = 6)
 hist(dis.core, main = "Distance correlations for AR(-0.7, -0.3)",
-     xlab = "Distance correlation", col = "lightblue", prob=T)
+     xlab = "Distance correlation", col = "lightblue", prob=T,
+     cex.lab = 1.3, cex.axis = 1.5, cex.main = 1.3, cex.sub = 1.5)
+dev.off()
 
-hist(z.beta, main = expression(bold(paste("Standardized ", beta, " coefficients for AR(0.7, 0.3)"))),
+pdf(file = "~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/Pictures/AR(-0.7,-0.3).beta.pdf",
+    width = 6,
+    height = 6)
+hist(z.beta, main = expression(bold(paste("Standardized ", beta,
+                                          " coefficients for AR(-0.7, -0.3)"))),
      xlab = expression(paste("Standardized ", beta, " coefficients")) ,
-     col = "lightblue",prob=T)
+     col = "lightblue",prob=T, cex.lab = 1.3, 
+     cex.axis = 1.5, cex.main = 1.3, cex.sub = 1.5)
+dev.off()
 
 
 
 
 # AR(0.6, 0.4)
 
+pdf(file = "~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/Pictures/AR(0.6,0.4).corr.pdf",
+    width = 6,
+    height = 6)
 hist(cor.coef, main = "Correlation coefficients for AR(0.6, 0.4)",
-     xlab = "Correlation coefficient", col = "lightblue",prob=T)
+     xlab = "Correlation coefficient", col = "lightblue",prob=T,
+     cex.lab = 1.3, cex.axis = 1.5, cex.main = 1.3, cex.sub = 1.5)
+dev.off()
 
+pdf(file = "~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/Pictures/AR(0.6,0.4).dist.pdf",
+    width = 6,
+    height = 6)
 hist(dis.core, main = "Distance correlations for AR(0.6, 0.4)",
-     xlab = "Distance correlation", col = "lightblue", prob=T)
+     xlab = "Distance correlation", col = "lightblue", prob=T,
+     cex.lab = 1.3, cex.axis = 1.5, cex.main = 1.3, cex.sub = 1.5)
+dev.off()
 
+pdf(file = "~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/Pictures/AR(0.6,0.4).beta.pdf",
+    width = 6,
+    height = 6)
 hist(z.beta, main = expression(bold(paste("Standardized ", beta, " coefficients for AR(0.6, 0.4)"))),
      xlab = expression(paste("Standardized ", beta, " coefficients")) ,
-     col = "lightblue",prob=T)
+     col = "lightblue",prob=T,
+     cex.lab = 1.3, cex.axis = 1.5, cex.main = 1.3, cex.sub = 1.5)
+dev.off()
 
 # AR(-0.6, -0.4)
 
+pdf(file = "~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/Pictures/AR(-0.6,-0.4).beta.pdf",
+    width = 6,
+    height = 6)
 hist(cor.coef, main = "Correlation coefficients for AR(-0.6, -0.4)",
-     xlab = "Correlation coefficient", col = "lightblue",prob=T)
+     xlab = "Correlation coefficient", col = "lightblue",prob=T,
+     cex.lab = 1.3, cex.axis = 1.5, cex.main = 1.3, cex.sub = 1.5)
+dev.off()
 
+pdf(file = "~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/Pictures/AR(0.6,0.4).dist.pdf",
+    width = 6,
+    height = 6)
 hist(dis.core, main = "Distance correlations for AR(-0.6, -0.4)",
-     xlab = "Distance correlation", col = "lightblue", prob=T)
+     xlab = "Distance correlation", col = "lightblue", prob=T,
+     cex.lab = 1.3, cex.axis = 1.5, cex.main = 1.3, cex.sub = 1.5)
+dev.off()
 
+pdf(file = "~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/Pictures/AR(0.6,0.4).beta.pdf",
+    width = 6,
+    height = 6)
 hist(z.beta, main = expression(bold(paste("Standardized ", beta, " coefficients for AR(-0.6, -0.4)"))),
      xlab = expression(paste("Standardized ", beta, " coefficients")) ,
-     col = "lightblue",prob=T)
+     col = "lightblue",prob=T,
+     cex.lab = 1.3, cex.axis = 1.5, cex.main = 1.3, cex.sub = 1.5)
+dev.off()
 
 # AR(0.6, 0.3)
 hist(cor.coef, main = "Correlation coefficients for AR(0.6, 0.3)",
@@ -195,66 +254,14 @@ hist(z.beta, main = expression(bold(paste("Standardized ", beta, " coefficients 
      col = "lightblue",prob=T)
 
 
-
-# AR(0.9, -0.9)
-
+# AR (0.9, -0.9)
 hist(cor.coef, main = "Correlation coefficients for AR(0.9, -0.9)",
-     xlab = "Correlation coefficient", col = "lightblue",prob=T,
-     xlim = c(0.7, 1.0))
+     xlab = "Correlation coefficient", col = "lightblue",prob=T)
 
 hist(dis.core, main = "Distance correlations for AR(0.9, -0.9)",
-     xlab = "Distance correlation", col = "lightblue", prob=T,
-     xlim = c(0.7, 1.0))
+     xlab = "Distance correlation", col = "lightblue", prob=T)
 
 hist(z.beta, main = expression(bold(paste("Standardized ", beta, " coefficients for AR(0.9, -0.9)"))),
      xlab = expression(paste("Standardized ", beta, " coefficients")) ,
      col = "lightblue",prob=T)
-
-
-# AR(0.3,0.3)
-load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/ts present/data/fifth.sim.RData")
-hist(cor.coef, main = "Correlation coefficients for AR(0.3, 0.3)",
-     xlab = "Correlation coefficient", col = "lightblue",prob=T,
-     xlim = c(0.1, 0.4))
-
-hist(dis.core, main = "Distance correlations for AR(0.3, 0.3)",
-     xlab = "Distance correlation", col = "lightblue", prob=T,
-     xlim = c(0.1, 0.4))
-
-hist(z.beta, main = expression(bold(paste("Standardized ", beta, " coefficients for AR(0.3, 0.3)"))),
-     xlab = expression(paste("Standardized ", beta, " coefficients")) ,
-     col = "lightblue",prob=T)
-
-
-# AR(-0.3, -0.3)
-load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/ts present/data/six.sim(-0.3,-0.3).RData")
-
-hist(cor.coef, main = "Correlation coefficients for AR(-0.3, -0.3)",
-     xlab = "Correlation coefficient", col = "lightblue",prob=T,
-     xlim = c(0.0, 0.4))
-
-hist(dis.core, main = "Distance correlations for AR(-0.3, -0.3)",
-     xlab = "Distance correlation", col = "lightblue", prob=T,
-     xlim = c(0.0, 0.4))
-
-hist(z.beta, main = expression(bold(paste("Standardized ", beta, " coefficients for AR(-0.3, -0.3)"))),
-     xlab = expression(paste("Standardized ", beta, " coefficients")) ,
-     col = "lightblue",prob=T)
-
-# AR(0.5, 0.5)
-load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/ts present/data/seventh.sim(0.5,0.5).RData")
-
-hist(cor.coef, main = "Correlation coefficients for AR(0.5, 0.5)",
-     xlab = "Correlation coefficient", col = "lightblue",prob=T,
-     xlim = c(0.0, 0.4))
-
-hist(dis.core, main = "Distance correlations for AR(0.5, 0.5)",
-     xlab = "Distance correlation", col = "lightblue", prob=T,
-     xlim = c(0.0, 0.4))
-
-hist(z.beta, main = expression(bold(paste("Standardized ", beta, " coefficients for AR(0.5, 0.5)"))),
-     xlab = expression(paste("Standardized ", beta, " coefficients")) ,
-     col = "lightblue",prob=T)
-
-
 
