@@ -10,6 +10,6 @@ broom.mixed
 cowplot
 knitr
 TSA
-kableExtra
 energy
 plotrix
+kableExtra

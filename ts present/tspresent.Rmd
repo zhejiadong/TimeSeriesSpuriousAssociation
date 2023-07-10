@@ -1,5 +1,5 @@
 ---
-title: "tspresent"
+title: "TimeSeries"
 author: "Zhejia Dong"
 date: "2023-04-15"
 output: html_document
@@ -172,7 +172,7 @@ ccf(y.ts[1,], x.ts[1,])
 - Correlation coefficients (ccf at lag 0)
 - Distance correlation
 - Standard beta correlation
-- Rejection rates of linear and distance correlaion test
+- Rejection rates of linear and distance correlation test
 
 ```{r}
 load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/ts present/data/first.sim.RData")
@@ -264,7 +264,7 @@ for(i in (p+1) : (popn+p)){
 ts.plot(ts[(p+1):(popn + p)])
 ```
 
-## Third simulation AR(2) (0.7,0.3)
+## AR(2) (0.7,0.3)
 
 ```{r, echo=FALSE,eval=FALSE}
 popn <- 1000
@@ -315,28 +315,30 @@ for(i in 1:n.sim){
   dis.p[i] <-dd$p.value
   lt <- lm(y.ts[i,] ~ x.ts[i,])
   ls <- summary(lt)
-  lm.beta[i] <- ls$coefficients[2,"Estimate"]
-  lm.p[i] <- ls$coefficients[2,4] ## p value for linear regression test, p value.
-  z.beta[i] <- lm.beta[i]/ (ls$coefficients[2,"Std. Error"] * sd(x.ts[i,]))
+  lm.beta[i] <- 
+    ls$coefficients[2,"Estimate"]
+  lm.p[i] <- 
+    ls$coefficients[2,4] ## p value for linear regression test, p value.
+  z.beta[i] <- 
+    lm.beta[i]/ (ls$coefficients[2,"Std. Error"] * sd(x.ts[i,]))
 }
 
 
 
 ```
 
+- cross correlation function plot
 ```{r, echo=FALSE}
 rm(list = ls())
 #load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/ts present/data/first.sim.RData")
 #load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/ts present/data/second.sim.RData")
-load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/ts present/data/third.sim.RData")
-```
-
-- cross correlation function plot
-
-```{r echo=FALSE}
+load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/data/ar(0.7,0.3).RData")
 ccf(y.ts[1,], x.ts[1,])
-
 ```
+
+
+
+
 
 - Correlation coefficients (ccf at lag 0)
 - Distance correlation
@@ -345,7 +347,8 @@ ccf(y.ts[1,], x.ts[1,])
 
 
 ```{r echo=FALSE}
-load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/ts present/data/third.sim.RData")
+#load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/ts present/data/third.sim.RData")
+load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/data/ar(0.7,0.3).RData")
 hist(cor.coef, main = "Correlation coefficients for AR(2)",
      xlab = "Correlation coefficient", col = "lightblue",prob=T)
 
@@ -357,6 +360,7 @@ hist(z.beta, main = expression(bold(paste("Standardized ", beta, " coefficients 
      col = "lightblue",prob=T)
 
 
+
 data.frame( "linear test" = mean(lm.p < 0.05),
             "dis test" = mean(dis.p < 0.05)) %>% 
   kbl( booktabs=T, escape=T, align = "c",digits = 3,
@@ -365,21 +369,18 @@ data.frame( "linear test" = mean(lm.p < 0.05),
   kable_material(c("striped")) 
 ```
 
-## Forth simulation AR(2) (0.9,-0.9)
+## AR(2) (0.6, 0.4)
+
+- cross correlation function plot
 ```{r, echo=FALSE}
 rm(list = ls())
 #load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/ts present/data/first.sim.RData")
 #load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/ts present/data/second.sim.RData")
 #load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/ts present/data/third.sim.RData")
-load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/ts present/data/forth.sim.RData")
-```
-
-- cross correlation function plot
-
-```{r echo=FALSE}
+load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/data/ar(0.6,0.4).RData")
 ccf(y.ts[1,], x.ts[1,])
-
 ```
+
 
 - Correlation coefficients (ccf at lag 0)
 - Distance correlation
@@ -388,7 +389,7 @@ ccf(y.ts[1,], x.ts[1,])
 
 
 ```{r echo=FALSE}
-load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/ts present/data/forth.sim.RData")
+load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/data/ar(0.6,0.4).RData")
 hist(cor.coef, main = "Correlation coefficients for AR(2)",
      xlab = "Correlation coefficient", col = "lightblue",prob=T)
 
@@ -400,7 +401,6 @@ hist(z.beta, main = expression(bold(paste("Standardized ", beta, " coefficients 
      xlab = expression(paste("Standardized ", beta, " coefficients")) ,
      col = "lightblue",prob=T)
 
-
 data.frame( "linear test" = mean(lm.p < 0.05),
             "dis test" = mean(dis.p < 0.05)) %>% 
   kbl( booktabs=T, escape=T, align = "c",digits = 3,
@@ -410,14 +410,12 @@ data.frame( "linear test" = mean(lm.p < 0.05),
 ```
 
 
-## More simulation for AR(0.3,0.3)
+## AR(2) (0.5,0.3)
 
 ```{r, echo=FALSE}
 rm(list = ls())
-#load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/ts present/data/first.sim.RData")
-#load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/ts present/data/second.sim.RData")
-#load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/ts present/data/third.sim.RData")
-load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/ts present/data/fifth.sim.RData")
+
+load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/data/ar(0.5,0.3).RData")
 
 ccf(y.ts[1,], x.ts[1,])
 
@@ -442,18 +440,17 @@ data.frame( "linear test" = mean(lm.p < 0.05),
 
 
 
-
-## More simulation for AR(-0.3, -0.3)
+## AR(2) (-0.5, -0.3)
 
 ```{r, echo=FALSE}
 rm(list = ls())
 
-load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/ts present/data/six.sim(-0.3,-0.3).RData")
-
+load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/data/ar(-0.5,-0.3).RData")
 ccf(y.ts[1,], x.ts[1,])
 
 hist(cor.coef, main = "Correlation coefficients for AR(2)",
      xlab = "Correlation coefficient", col = "lightblue",prob=T)
+
 
 hist(dis.core, main = "Distance correlations for AR(2)",
      xlab = "Distance correlation", col = "lightblue", prob=T)
@@ -462,28 +459,28 @@ hist(z.beta, main = expression(bold(paste("Standardized ", beta, " coefficients 
      xlab = expression(paste("Standardized ", beta, " coefficients")) ,
      col = "lightblue",prob=T)
 
-
 data.frame( "linear test" = mean(lm.p < 0.05),
             "dis test" = mean(dis.p < 0.05)) %>% 
   kbl( booktabs=T, escape=T, align = "c",digits = 3,
                 caption = "Rejection rates for linear and distance correlation test") %>%
   kable_styling(full_width =F, latex_options = c("HOLD_position")) %>% 
   kable_material(c("striped")) 
+
 ```
 
 
 
-## More Simulation for AR(0.5, 0.5)
+## AR(2) (-0.6, -0.3)
 
 ```{r, echo=FALSE}
 rm(list = ls())
 
-load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/ts present/data/seventh.sim(0.5,0.5).RData")
-
+load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/data/ar(-0.6,-0.3).RData")
 ccf(y.ts[1,], x.ts[1,])
 
 hist(cor.coef, main = "Correlation coefficients for AR(2)",
      xlab = "Correlation coefficient", col = "lightblue",prob=T)
+
 
 hist(dis.core, main = "Distance correlations for AR(2)",
      xlab = "Distance correlation", col = "lightblue", prob=T)
@@ -492,6 +489,35 @@ hist(z.beta, main = expression(bold(paste("Standardized ", beta, " coefficients 
      xlab = expression(paste("Standardized ", beta, " coefficients")) ,
      col = "lightblue",prob=T)
 
+data.frame( "linear test" = mean(lm.p < 0.05),
+            "dis test" = mean(dis.p < 0.05)) %>% 
+  kbl( booktabs=T, escape=T, align = "c",digits = 3,
+                caption = "Rejection rates for linear and distance correlation test") %>%
+  kable_styling(full_width =F, latex_options = c("HOLD_position")) %>% 
+  kable_material(c("striped")) 
+
+```
+
+
+
+## AR(2) (-0.7, -0.3)
+
+```{r, echo=FALSE}
+rm(list = ls())
+
+load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/data/ar(-0.7,-0.3).RData")
+ccf(y.ts[1,], x.ts[1,])
+
+hist(cor.coef, main = "Correlation coefficients for AR(2)",
+     xlab = "Correlation coefficient", col = "lightblue",prob=T)
+
+
+hist(dis.core, main = "Distance correlations for AR(2)",
+     xlab = "Distance correlation", col = "lightblue", prob=T)
+
+hist(z.beta, main = expression(bold(paste("Standardized ", beta, " coefficients for AR(2)"))),
+     xlab = expression(paste("Standardized ", beta, " coefficients")) ,
+     col = "lightblue",prob=T)
 
 data.frame( "linear test" = mean(lm.p < 0.05),
             "dis test" = mean(dis.p < 0.05)) %>% 
@@ -499,7 +525,72 @@ data.frame( "linear test" = mean(lm.p < 0.05),
                 caption = "Rejection rates for linear and distance correlation test") %>%
   kable_styling(full_width =F, latex_options = c("HOLD_position")) %>% 
   kable_material(c("striped")) 
+
 ```
+
+
+## Prewhitening
+
+### Use prewhiten function from TSA package
+```{r,echo=TRUE}
+rm(list = ls())
+load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/data/ar(0.7,0.3).RData")
+
+ccf(y.ts[1,], x.ts[1,])
+prewhiten(y.ts[1,],x.ts[1,])
+```
+
+### Prewhitening method from the web post
+```{r, echo=TRUE, eval=FALSE}
+
+eff.prewhiten <- function(x.ts,p){
+
+  B <- matrix(0, nrow = nrow(x.ts), ncol = 2) 
+  prew.ts <- matrix(0, nrow = nrow(x.ts), ncol = ncol(x.ts)-p)
+ 
+   for(i in 1:nrow(x.ts)){
+    X <-  cbind(x.ts[i,2:(popn-1)],x.ts[i,1:(popn-2)])
+    Y <-  x.ts[i,3:popn]
+    B[i,] <- lm(Y~X)$coefficients[2:3]
+    #ar.ols(x.ts[i,],order.max = 2)$ar %>% 
+    #as.vector()
+  }
+  ave.coef <- apply(B,2,mean)
+
+  get.W <- function(ave.coef){
+    A <- diag(1,popn)
+    for(i in 2:popn){
+      A[i, (i-1)] <- (-ave.coef[1])
+     if(i >=3){
+      A[i, (i-2)] <- (-ave.coef[2])
+     }
+    }
+    inv.V <- A %*% t(A)
+    eg <- eigen(inv.V)
+    W <- eg$vectors %*% sqrt(diag(eg$values)) %*% t(eg$vectors)
+    return(W[3:popn, 3:popn])
+  }
+
+
+  for(i in 1:nrow(x.ts)){
+    X <-  cbind(x.ts[i,2:(popn-1)],x.ts[i,1:(popn-2)])
+    Y <-  x.ts[i,3:popn]
+    B[i,] <- lm(Y~X)$coefficients[2:3]
+    W <- get.W(B[i,])
+    wy <- W %*% x.ts[i,3:popn]
+    wx <- W %*% cbind(x.ts[i,2:(popn-1)], x.ts[i,1:(popn-2)])
+    ls <- lm(wy~wx)
+    prew.ts[i,] <- ls$residuals
+  }
+  
+  return(list(ave.coef= ave.coef,
+              prew.ts = prew.ts))
+}
+
+eff.x.ts <- eff.prewhiten(x.ts, 2)
+eff.y.ts <- eff.prewhiten(y.ts, 2)
+```
+
 
 
 
