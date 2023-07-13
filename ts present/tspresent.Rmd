@@ -532,7 +532,7 @@ data.frame( "linear test" = mean(lm.p < 0.05),
 ## Prewhitening
 
 ### Use prewhiten function from TSA package
-```{r,echo=TRUE}
+```{r,echo=FALSE}
 rm(list = ls())
 load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/data/ar(0.7,0.3).RData")
 
@@ -587,11 +587,100 @@ eff.prewhiten <- function(x.ts,p){
               prew.ts = prew.ts))
 }
 
+
 eff.x.ts <- eff.prewhiten(x.ts, 2)
 eff.y.ts <- eff.prewhiten(y.ts, 2)
 ```
 
 
+```{r, eval=FALSE}
+cor.coef.pre <- c()
+dis.core.pre <- c()
+dis.p.pre <- c()
+lm.p.pre <- c()
+lm.beta.pre <- c()
+z.beta.pre <- c()
+
+for(i in 1:n.sim){
+  cor.coef.pre[i] <- cor(eff.x.ts$prew.ts[i,], eff.y.ts$prew.ts[i,])
+  dis.core.pre[i] <- dcor(eff.x.ts$prew.ts[i,], eff.y.ts$prew.ts[i,])
+  dd <- dcorT.test(eff.x.ts$prew.ts[i,], eff.y.ts$prew.ts[i,])
+  dis.p.pre[i] <-dd$p.value
+  lt <- lm(eff.y.ts$prew.ts[i,] ~ eff.x.ts$prew.ts[i,])
+  ls <- summary(lt)
+  lm.beta.pre[i] <- 
+   ls$coefficients[2,"Estimate"]
+  lm.p.pre[i] <- 
+    ls$coefficients[2,4] ## p value for linear regression test, p value.
+  z.beta.pre[i] <- 
+    lm.beta[i]/ (ls$coefficients[2,"Std. Error"] * sd(x.ts[i,]))
+}
+
+ccf(x.ts[1,], y.ts[1,])
+ccf(eff.x.ts$prew.ts[1,], eff.y.ts$prew.ts[1,])
+
+hist(cor.coef, main = "Correlation coefficients for AR(2)",
+     xlab = "Correlation coefficient", col = "lightblue",prob=T)
+
+
+hist(dis.core, main = "Distance correlations for AR(2)",
+     xlab = "Distance correlation", col = "lightblue", prob=T)
+
+hist(z.beta, main = expression(bold(paste("Standardized ", beta, " coefficients for AR(2)"))),
+     xlab = expression(paste("Standardized ", beta, " coefficients")) ,
+     col = "lightblue",prob=T)
+
+data.frame( "linear test" = mean(lm.p < 0.05),
+            "dis test" = mean(dis.p < 0.05)) %>% 
+  kbl( booktabs=T, escape=T, align = "c",digits = 3,
+                caption = "Rejection rates for linear and distance correlation test") %>%
+  kable_styling(full_width =F, latex_options = c("HOLD_position")) %>% 
+  kable_material(c("striped")) 
+
+```
+
+```{r, echo=FALSE, fig.width= 10}
+load("~/Dropbox (Brown)/2023 Spring RAship/Spring23_RA/data/prewhiten.RData")
+ccf(x.ts[1,], y.ts[1,], main = "x & y")
+ccf(eff.x.ts$prew.ts[1,], eff.y.ts$prew.ts[1,], main = "prewhiten x & y")
+
+par(mfrow = c(1,2))
+
+hist(cor.coef, main = "Correlation coefficients",
+     xlab = "Correlation coefficient", col = "lightblue",prob=T)
+
+hist(cor.coef.pre, main = "Correlation coefficients prewhitening",
+     xlab = "Correlation coefficient", col = "lightblue",prob=T)
+
+
+hist(dis.core, main = "Distance correlations",
+     xlab = "Distance correlation", col = "lightblue", prob=T)
+
+hist(dis.core.pre, main = "Distance correlations prewhitening",
+     xlab = "Distance correlation", col = "lightblue", prob=T)
+
+hist(z.beta, main = expression(bold(paste("Standardized ", beta, ""))),
+     xlab = expression(paste("Standardized ", beta, " coefficients")) ,
+     col = "lightblue",prob=T)
+
+hist(z.beta.pre, main = expression(bold(paste("Standardized ", beta, " prewhitening"))),
+     xlab = expression(paste("Standardized ", beta, " coefficients")) ,
+     col = "lightblue",prob=T)
+
+data.frame( "linear test" = mean(lm.p < 0.05),
+            "dis test" = mean(dis.p < 0.05)) %>% 
+  kbl( booktabs=T, escape=T, align = "c",digits = 3,
+                caption = "Rejection rates for linear and distance correlation test") %>%
+  kable_styling(full_width =F, latex_options = c("HOLD_position")) %>% 
+  kable_material(c("striped")) 
+
+data.frame( "linear test" = mean(lm.p.pre < 0.05),
+            "dis test" = mean(dis.p.pre < 0.05)) %>% 
+  kbl( booktabs=T, escape=T, align = "c",digits = 3,
+                caption = "Rejection rates for linear and distance correlation test prewhitening") %>%
+  kable_styling(full_width =F, latex_options = c("HOLD_position")) %>% 
+  kable_material(c("striped")) 
+```
 
 
 ```{r eval=FALSE}
